@@ -148,8 +148,16 @@ fail() { printf >&2 '%s\n' "$*"; exit 1; }
 if [ "$#" -ge 1 ]; then
   echo "Execute Archi with _args: $*"
   xvfb-run \
-    /opt/Archi/Archi -application "$ARCHI_APP" -consoleLog -nosplash "$@"
-  exit 0
+    /opt/Archi/Archi -application "$ARCHI_APP" -consoleLog -nosplash "$@" > console.log
+  echo  `cat console.log`
+  # todo aha : this jasmine - specific section should not be hard-coded here !!
+  grep -e '"overallStatus":"passed"' console.log 
+  if [ $? -ne 0 ]; then
+    fail `cat console.log`
+  else
+    echo "jArchi script succeeded."
+    exit 0;
+  fi
 fi
 
 
