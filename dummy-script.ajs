@@ -1,2 +1,0 @@
-console.log("Hey i'm running inside Archi ! " + model.name);
-alert("test");
