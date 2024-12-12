@@ -25,7 +25,7 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 FROM base AS archi
-ARG ARCHI_VERSION=5.2.0
+ARG ARCHI_VERSION=5.4.2
 
 # Download & extract Archimate tool
 RUN set -eux; \
