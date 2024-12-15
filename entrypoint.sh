@@ -78,6 +78,14 @@ archi_run() {
         "${ARCHI_JASPER_REPORT_TITLE:=$_project}"
     )
 
+  # RUN jArchi script
+  [ "${ARCHI_RUN_SCRIPT_ENABLED,,}" == true ] &&
+    _args+=(
+      --script.runScript
+        "${JARCHI_SCRIPT_PATH}"
+    )
+
+
   # Run Archi
   xvfb-run \
     /opt/Archi/Archi -application "$ARCHI_APP" -consoleLog -nosplash \
