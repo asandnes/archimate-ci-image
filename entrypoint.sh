@@ -15,6 +15,8 @@ set -euo pipefail
 : "${ARCHI_CSV_REPORT_ENABLED:=false}"
 : "${ARCHI_EXPORT_MODEL_ENABLED:=true}"
 : "${ARCHI_APP:=com.archimatetool.commandline.app}"
+: "${ARCHI_RUN_SCRIPT_ENABLED:=false}"
+
 
 : "${GITHUB_SERVER_URL:=https://github.com}"
 : "${GITHUB_PAGES_BRANCH:=gh-pages}"
