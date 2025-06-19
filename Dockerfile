@@ -25,24 +25,27 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 FROM base AS archi
-ARG ARCHI_VERSION=5.4.3
+ARG ARCHI_MINOR_VERSION=5.6
+ARG ARCHI_PATCH_VERSION=5.6.0
+ARG ARCHI_URL=https://www.archimatetool.com/downloads/archi/${ARCHI_MINOR_VERSION}/Archi-Linux64-${ARCHI_PATCH_VERSION}.tgz
 
 # Download & extract Archimate tool
 RUN set -eux; \
     curl -#Lo archi.tgz \
-      "https://www.archimatetool.com/downloads/archi/$ARCHI_VERSION/Archi-Linux64-$ARCHI_VERSION.tgz"; \
+      ${ARCHI_URL}; \
     tar zxf archi.tgz -C /opt/; \
     rm archi.tgz; \
     chmod +x /opt/Archi/Archi; \
     mkdir -p /root/.archi/dropins /archi/report /archi/project
 
 FROM archi AS coarchi
-ARG COARCHI_VERSION=0.9.2
+ARG COARCHI_VERSION=0.9.4
+ARG COARCHI_URL=https://www.archimatetool.com/downloads/coarchi/coArchi_${COARCHI_VERSION}.archiplugin
 
 # Download & extract Archimate coArchi plugin
 RUN set -eux; \
     curl -#Lo coarchi.zip --request POST \
-      "https://www.archimatetool.com/downloads/coarchi/coArchi_$COARCHI_VERSION.archiplugin"; \
+      ${COARCHI_URL}; \
     unzip coarchi.zip -d /root/.archi/dropins/ && \
     rm coarchi.zip
 
