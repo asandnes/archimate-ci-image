@@ -43,13 +43,17 @@ for cloning.
 
 You can pull image from registries:
 
-* `ghcr.io/woozymasta/archimate-ci-image:5.0.2-1.0.4`
-* `docker.io/woozymasta/archimate-ci-image:5.0.2-1.0.4`
+* `docker.io/arnfinns/archimate-ci-image:5.6.0` (rootless by default)
 
-And rootless image:
+The container runs as a non-root user (`archi`) for enhanced security, making it suitable for production environments and environments with strict security requirements.
 
-* `ghcr.io/woozymasta/archimate-ci-image:5.0.2-1.0.4-rootless`
-* `docker.io/woozymasta/archimate-ci-image:5.0.2-1.0.4-rootless`
+Key security features:
+- Runs as user `archi` (UID 1000) instead of root
+- All files and directories are owned by the `archi` user
+- Enhanced security through reduced privileges
+- Compatible with most container security policies
+
+**Note**: When using the container, ensure that mounted volumes have appropriate permissions for the `archi` user (UID 1000).
 
 ## Run Container
 
@@ -66,7 +70,7 @@ docker run --rm -ti \
   -e ARCHI_JASPER_REPORT_ENABLED=false \
   -e ARCHI_CSV_REPORT_ENABLED=true \
   -e ARCHI_EXPORT_MODEL_ENABLED=true \
-  ghcr.io/woozymasta/archimate-ci-image:5.0.2-1.0.4
+  arnfinns/archimate-ci-image:5.6.0
 ```
 
 An example with handling a local repository:
@@ -100,9 +104,10 @@ eclipse.preferences.version=1
 scaleImageExport=true
 EOF
 
+# Container runs as archi user (non-root)
 docker run --rm -ti \
-  -v $(pwd)/settings:/root/.archi/.metadata/.plugins/org.eclipse.core.runtime/.settings \
-  ...
+  -v $(pwd)/settings:/home/archi/.archi/.metadata/.plugins/org.eclipse.core.runtime/.settings \
+  arnfinns/archimate-ci-image:5.6.0
 ```
 
 ## Configuration
@@ -241,20 +246,15 @@ and all report paths are automatically set to `$CI_PROJECT_DIR/public`
 ## Build Container
 
 ```bash
-ARCHI_VERSION=5.0.2
-COARCHI_VERSION=0.8.7
+ARCHI_VERSION=5.6.0
+COARCHI_VERSION=0.9.4
 
+# Build the main container (rootless by default)
 docker build \
-  --tag "archimate-ci-image:$ARCHI_VERSION-dev" \
-  --build-arg="ARCHI_VERSION=$ARCHI_VERSION" \
+  --tag "archimate-ci-image:$ARCHI_VERSION" \
+  --build-arg="ARCHI_MINOR_VERSION=5.6" \
+  --build-arg="ARCHI_PATCH_VERSION=$ARCHI_VERSION" \
   --build-arg="COARCHI_VERSION=$COARCHI_VERSION" \
-  ./
-
-docker build \
-  --file Dockerfile.rootless \
-  --tag "archimate-ci-image:$ARCHI_VERSION-dev-rootless" \
-  --build-arg="ARCHIMATE_CI_IMAGE=archimate-ci" \
-  --build-arg="ARCHIMATE_CI_VERSION=$ARCHI_VERSION-dev" \
   ./
 ```
 
