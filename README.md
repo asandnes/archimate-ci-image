@@ -70,7 +70,7 @@ docker run --rm -ti \
   -e ARCHI_JASPER_REPORT_ENABLED=false \
   -e ARCHI_CSV_REPORT_ENABLED=true \
   -e ARCHI_EXPORT_MODEL_ENABLED=true \
-  arnfinns/archimate-ci-image:5.6.0
+  docker.io/arnfinns/archimate-ci-image:5.6.0
 ```
 
 An example with handling a local repository:
@@ -83,13 +83,13 @@ chmod o+rw ./report
 docker run --rm -ti \
   -v $(pwd):/archi/project \
   -v $(pwd)/report:/archi/report \
-  ghcr.io/woozymasta/archimate-ci-image:5.0.2-1.0.4
+  docker.io/arnfinns/archimate-ci-image:5.6.0
 ```
 
 Working with the CLI directly:
 
 ```bash
-docker run --rm -ti ghcr.io/woozymasta/archimate-ci-image:5.0.2-1.0.4 --help
+docker run --rm -ti docker.io/arnfinns/archimate-ci-image:5.6.0 --help
 ```
 
 Example on how to write preferences:
@@ -107,7 +107,7 @@ EOF
 # Container runs as archi user (non-root)
 docker run --rm -ti \
   -v $(pwd)/settings:/home/archi/.archi/.metadata/.plugins/org.eclipse.core.runtime/.settings \
-  arnfinns/archimate-ci-image:5.6.0
+  docker.io/arnfinns/archimate-ci-image:5.6.0
 ```
 
 ## Configuration
@@ -178,27 +178,58 @@ All inputs equivalent to environment variables:
 Add a configuration like this to your actions `.github/workflows/main.yml` file:
 
 ```yml
-jobs:
-  archi_report:
-    permissions:
-      contents: write
-      pages: write
-    runs-on: ubuntu-latest
-    name: Deploy Archi report HTML to GitHub Pages
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v2
+name: Build and Push Docker Image
 
-      - name: Deploy Archi report
-        id: archi
-        uses: WoozyMasta/archimate-ci-image@5.0.2-1.0.4
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - 'main'
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: arnfinns/archimate-ci-image
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract Docker image metadata
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          archiHtmlReportEnabled: true
-          archiJasperReportEnabled: true
-          archiJasperReportFormats: PDF,DOCX
-          archiCsvReportEnabled: false
-          archiExportModelEnabled: true
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          images: ${{ env.REGISTRY || 'docker.io' }}/${{ env.IMAGE_NAME || github.repository }}
+          tags: |
+            # set latest tag for default branch
+            type=raw,value=latest,enable={{is_default_branch}}
+            # set version tag for git tags
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          provenance: true
+          sbom: true
 ```
 
 In the repository settings, set the branch for publishing pages that you
@@ -215,7 +246,7 @@ Add a configuration like this to your `./.gitlab-ci.yml` file:
 pages:
   stage: build
   image:
-    name: ghcr.io/woozymasta/archimate-ci-image:5.0.2-1.0.4
+    name: docker.io/arnfinns/archimate-ci-image:5.6.0
     entrypoint: [""]
 
   script:
@@ -270,7 +301,7 @@ podman run --rm -ti \
   -v $(pwd)/report:/archi/report \
   -e GIT_REPOSITORY=https://github.com/WoozyMasta/archimate-ci-image-example.git \
   -e ARCHI_JASPER_REPORT_ENABLED=false \
-  ghcr.io/woozymasta/archimate-ci-image:5.0.2-1.0.4
+  docker.io/arnfinns/archimate-ci-image:5.6.0
 ```
 
 ---
@@ -285,7 +316,7 @@ docker run --rm -ti \
   -e GIT_REPOSITORY=https://github.com/WoozyMasta/archimate-ci-image-example.git
   --network=host
   --add-host="$(getent hosts gitlab.internal.tld | awk '{print $2 ":" $1}')"
-  ghcr.io/woozymasta/archimate-ci-image:5.0.2-1.0.4
+  docker.io/arnfinns/archimate-ci-image:5.6.0
 ```
 
 <!-- links -->
